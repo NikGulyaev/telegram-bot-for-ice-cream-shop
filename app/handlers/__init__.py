@@ -1,5 +1,10 @@
-from telegram.ext import BaseHandler, CommandHandler
+from telegram.ext import CommandHandler
 
 from app.handlers.commands import start
 
-HANDLERS: tuple[BaseHandler] = (CommandHandler("start", start),)
+
+HANDLERS = (
+    CommandHandler("start", start),
+    # сюда можно добавить другие команды, например:
+    # CommandHandler("menu", menu),
+)

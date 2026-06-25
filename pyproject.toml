@@ -10,11 +10,20 @@ packages = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "python-telegram-bot (>=22.8,<23.0)",
-    "pydantic-settings (>=2.14.2,<3.0.0)"
+    "python-telegram-bot>=20.0; extra == 'job-queue'",
+    "pydantic-settings (>=2.14.2,<3.0.0)",
+    "psycopg2 (>=2.9.12,<3.0.0)",
+    "asyncpg (>=0.31.0,<0.32.0)",
+    "sqlalchemy[asyncio] (>=2.0.51,<3.0.0)",
+    "ptbcontrib[roles] @ git+https://github.com/python-telegram-bot/ptbcontrib.git@main"
 ]
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "asyncpg-stubs (>=0.31.2,<0.32.0) ; python_version >= \"3.12\" and python_version < \"4.0\""
+]

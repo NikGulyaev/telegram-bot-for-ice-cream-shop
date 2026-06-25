@@ -1,8 +1,14 @@
 import logging
 
+from ptbcontrib.roles import setup_roles, RolesHandler
 from telegram.ext import Application as PTBApplication, ApplicationBuilder
-from app.handlers import HANDLERS
 
+from app.core.users.constants import RolesEnum
+from app.core.users.repositories import UserRepository
+from app.core.users.services import UserService
+from app.handlers import HANDLERS
+from app.infra.postgres.base import Base
+from app.infra.postgres.db import Database
 from settings.config import AppSettings
 
 
@@ -10,7 +16,22 @@ class Application(PTBApplication):
     def __init__(self, app_settings: AppSettings, **kwargs):
         super().__init__(**kwargs)
         self.settings = app_settings
+        self._roles = setup_roles(self)
         self._register_handlers()
+        self.database = Database(app_settings.postgres_dsn, declarative_base=Base)
+
+        user_repository = UserRepository(database=self.database)
+        self.user_service = UserService(repository=user_repository)
+
+    @staticmethod
+    async def application_startup(application: "Application") -> None:
+        await application.database.create_tables()
+        await application.setup_roles()
+        application._register_handlers()
+
+    @staticmethod
+    async def application_shutdown(application: "Application") -> None:
+        await application.database.shutdown()
 
     def run(self) -> None:
         self.run_polling()
@@ -18,6 +39,15 @@ class Application(PTBApplication):
     def _register_handlers(self):
         for handler in HANDLERS:
             self.add_handler(handler)
+
+
+    async def setup_roles(self) -> None:
+        for role in RolesEnum:
+            if role not in self._roles:
+                self._roles.add_role(role)
+
+            for user_id in await self.user_service.get_user_ids_for_role(RolesEnum[role]):
+                self._roles[role].add_member(user_id)
 
 
 def configure_logging():
@@ -31,7 +61,9 @@ def configure_logging():
 def create_app(app_settings: AppSettings) -> Application:
     application = (ApplicationBuilder()
                    .application_class(Application, kwargs={"app_settings": app_settings})
-                   .token(app_settings.TELEGRAM_API_KEY.get_secret_value()).build())
+                   .post_init(Application.application_startup) # type: ignore[arg-type]
+                   .post_shutdown(Application.application_shutdown) # type: ignore[arg-type]
+                   .token(app_settings.telegram_api_key.get_secret_value()).build())
     return application #type: ignore[return-value]
 
 
