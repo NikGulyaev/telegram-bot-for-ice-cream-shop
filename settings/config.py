@@ -11,3 +11,8 @@ class AppSettings(BaseSettings):
     LOG_LEVEL: str = "INFO"
 
     postgres_dsn: Secret[PostgresDsn]
+
+    ADMIN_INTERFACE_PORT: int = 8001
+    ADMIN_SECRET_KEY: SecretStr = SecretStr("secrtetkey")
+    ADMIN_LOGIN: SecretStr = SecretStr("admin")
+    ADMIN_PASSWORD: SecretStr = SecretStr("admin")
