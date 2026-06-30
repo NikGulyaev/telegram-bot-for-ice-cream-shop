@@ -1,23 +1,23 @@
-from telegram import Update
+from app.core.orders.constants import OrderStatusEnum
+from app.core.orders.exceptions import ActiveOrderExists
+from app.core.orders.services import OrderService, ProductService
+from app.core.users.services import UserService
+#from app.handlers.
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not update.effective_user:
-        return
+    if update.effective_chat and update.effective_user:
+        await context.application.user_service.register_visitor(update.effective_user.id) #type: ignore[attr-defined]
+        keyboard = [
+            [InlineKeyboardButton("Сделать заказ", callback_data=("order_create",))]
+        ]
+        markup = InlineKeyboardMarkup(keyboard)
 
-    user_id = update.effective_user.id
-    user_service = context.application.user_service  # type: ignore[attr-defined]
-
-    # Сначала регистрируем пользователя, если его ещё нет
-    await user_service.register_visitor(user_id)
-
-    # Проверяем роль
-    is_waiter = await user_service.is_waiter(user_id)
-
-    if is_waiter:
-        text = "Добро пожаловать на смену, официант! Что нужно сделать?"
-    else:
-        text = "Добро пожаловать! Выберите действие из меню."
-
-    await update.effective_message.reply_text(text)
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="Добро пожаловать",
+            reply_markup=markup
+        )
