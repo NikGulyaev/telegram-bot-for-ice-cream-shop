@@ -32,7 +32,7 @@ class OrderRepository:
     async def get_order_by_id(self, order_id: int) -> Order | None:
         async with self.database.session() as session:
             query = select(Order).where(Order.id == order_id).options(
-                joinedload(Order.product).joinedload(OrderedProduct.product)
+                joinedload(Order.products).joinedload(OrderedProduct.product)
             )
             return await session.scalar(query)
         
@@ -41,7 +41,7 @@ class OrderRepository:
             select_stmt = select(Order).where(
                 and_(Order.user_id == user_id,
                      Order.status.in_([OrderStatusEnum.unlisted, OrderStatusEnum.ordered]))).options(
-                joinedload(Order.product).joinedload(OrderedProduct.product))
+                joinedload(Order.products).joinedload(OrderedProduct.product))
             return await session.scalar(select_stmt)
         
     async def add_product_to_order(self, order_id: int, product_id: int) -> None:

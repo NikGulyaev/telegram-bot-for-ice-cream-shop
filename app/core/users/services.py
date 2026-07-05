@@ -14,6 +14,9 @@ class UserService:
     async def register_visitor(self, user_id: int) -> None:
         await self.repository.create_user_if_not_exist(user_id)
 
+    async def get_waiter_users_ids(self) -> list[int]:
+        return await self.get_user_ids_for_role(role=RolesEnum.waiter)
+
     async def is_waiter(self, user_id: int) -> bool:
         """Проверяет, помечен ли пользователь как официант (is_waiter=True)"""
         async with self.repository.database.session() as session:

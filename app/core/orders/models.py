@@ -28,7 +28,7 @@ class Order(Base):
     status: Mapped[OrderStatusEnum] = mapped_column(
         ENUM(*[str(member) for member in OrderStatusEnum], name="order_status")
     )
-    product: Mapped[list["OrderedProduct"]] = relationship()
+    products: Mapped[list["OrderedProduct"]] = relationship()
 
 
 class OrderedProduct(Base):

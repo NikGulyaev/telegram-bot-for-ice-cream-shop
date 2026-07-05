@@ -18,7 +18,6 @@ class Application(PTBApplication):
         super().__init__(**kwargs)
         self.settings = app_settings
         self._roles = setup_roles(self)
-        self._register_handlers()
         self.database = Database(app_settings.postgres_dsn, declarative_base=Base)
 
         user_repository = UserRepository(database=self.database)
@@ -28,7 +27,7 @@ class Application(PTBApplication):
     async def application_startup(application: "Application") -> None:
         await application.database.create_tables()
         await application.setup_roles()
-        application._register_handlers()
+        application.register_handlers()
         application.setup_jobs()
 
     @staticmethod
@@ -38,9 +37,14 @@ class Application(PTBApplication):
     def run(self) -> None:
         self.run_polling()
 
-    def _register_handlers(self):
+    def register_handlers(self) -> None:
         for handler in HANDLERS:
-            self.add_handler(handler)
+            if handler.role:
+                if self._roles is None:
+                    raise Exception("Roles are not set up")
+                self.add_handler(RolesHandler(handler.handler, roles=self._roles[handler.role]))
+            else:
+                self.add_handler(handler.handler)
 
 
     async def setup_roles(self) -> None:
